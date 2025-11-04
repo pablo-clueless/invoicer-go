@@ -5,3 +5,8 @@ type CreateCustomerDto struct {
 	Name  string `json:"name" validate:"required"`
 	Phone string `json:"phone" validate:"required"`
 }
+
+type UpdateCustomerDto struct {
+	Name  *string `json:"name,omitempty"`
+	Phone *string `json:"phone,omitempty"`
+}

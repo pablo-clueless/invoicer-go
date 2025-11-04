@@ -5,6 +5,20 @@ type Pagination struct {
 	Limit int `json:"limit"`
 }
 
+type CustomerPagination struct {
+	Pagination
+	Name  *string `json:"name,omitempty"`
+	Email *string `json:"email,omitempty"`
+}
+
+type InvoicePagination struct {
+	Pagination
+	CustomerId  *string `json:"customerId,omitempty"`
+	ReferenceNo *string `json:"referenceNo,omitempty"`
+	Status      *string `json:"status,omitempty"`
+	Title       *string `json:"title,omitempty"`
+}
+
 type PaginatedResponse[T any] struct {
 	Data       []T `json:"items"`
 	Limit      int `json:"limit"`

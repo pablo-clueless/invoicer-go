@@ -9,15 +9,16 @@ import (
 
 type User struct {
 	BaseModel
-	BankInformation BankInformation `json:"bankInformation" gorm:"embedded"`
-	CompanyLogo     string          `json:"companyLogo" gorm:"type:varchar(255);not null"`
-	CompanyName     string          `json:"companyName" gorm:"type:varchar(255);not null"`
-	Email           string          `json:"email" gorm:"type:varchar(255);uniqueIndex;not null"`
-	Name            string          `json:"name" gorm:"type:varchar(255);not null"`
-	Phone           string          `json:"phone" gorm:"type:varchar(255);uniqueIndex;not null"`
-	RcNumber        string          `json:"rcNumber" gorm:"type:varchar(255);uniqueIndex;not null"`
-	TaxId           string          `json:"taxId" gorm:"type:varchar(255);uniqueIndex;not null"`
-	Website         string          `json:"website" gorm:"type:varchar(255);uniqueIndex;not null"`
+	BankInformation *BankInformation `json:"bankInformation" gorm:"embedded"`
+	CompanyLogo     string           `json:"companyLogo" gorm:"type:varchar(255);not null"`
+	CompanyName     string           `json:"companyName" gorm:"type:varchar(255);not null"`
+	Email           string           `json:"email" gorm:"type:varchar(255);uniqueIndex;not null"`
+	Name            string           `json:"name" gorm:"type:varchar(255);not null"`
+	Phone           string           `json:"phone" gorm:"type:varchar(255);uniqueIndex;not null"`
+	Provider        string           `json:"provider" gorm:"type:varchar(255);not null"`
+	RcNumber        string           `json:"rcNumber" gorm:"type:varchar(255);uniqueIndex;not null"`
+	TaxId           string           `json:"taxId" gorm:"type:varchar(255);uniqueIndex;not null"`
+	Website         string           `json:"website" gorm:"type:varchar(255);uniqueIndex;not null"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {

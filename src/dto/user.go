@@ -13,10 +13,10 @@ type UpdateUserDto struct {
 }
 
 type BankInformation struct {
-	AccountName   string `json:"accountName"`
-	AccountNumber string `json:"accountNumber"`
-	BankName      string `json:"bankName"`
-	BankSwiftCode string `json:"bankSwiftCode"`
-	Iban          string `json:"iban"`
-	RoutingNumber string `json:"routingNumber"`
+	AccountName   *string `json:"accountName,omitempty"`
+	AccountNumber *string `json:"accountNumber,omitempty"`
+	BankName      *string `json:"bankName,omitempty"`
+	BankSwiftCode *string `json:"bankSwiftCode,omitempty"`
+	Iban          *string `json:"iban,omitempty"`
+	RoutingNumber *string `json:"routingNumber,omitempty"`
 }
