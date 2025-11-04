@@ -27,15 +27,12 @@ type APIResponse struct {
 }
 
 const (
-	NotFoundCode         = "RESOURCE_NOT_FOUND"
-	UserNotFoundCode     = "USER_NOT_FOUND"
-	ProductNotFoundCode  = "PRODUCT_NOT_FOUND"
-	OrderNotFoundCode    = "ORDER_NOT_FOUND"
-	CategoryNotFoundCode = "CATEGORY_NOT_FOUND"
-	ValidationErrorCode  = "VALIDATION_ERROR"
-	InternalErrorCode    = "INTERNAL_ERROR"
-	UnauthorizedCode     = "UNAUTHORIZED"
-	ForbiddenCode        = "FORBIDDEN"
+	NotFoundCode        = "RESOURCE_NOT_FOUND"
+	ValidationErrorCode = "VALIDATION_ERROR"
+	InternalErrorCode   = "INTERNAL_ERROR"
+	UnauthorizedCode    = "UNAUTHORIZED"
+	ForbiddenCode       = "FORBIDDEN"
+	ConflictCode        = "CONFLICT"
 )
 
 func GlobalNotFound() gin.HandlerFunc {
@@ -64,22 +61,6 @@ func NotFound(ctx *gin.Context, message string, code string) {
 
 	ctx.JSON(http.StatusNotFound, response)
 	ctx.Abort()
-}
-
-func UserNotFound(ctx *gin.Context) {
-	NotFound(ctx, "User not found", UserNotFoundCode)
-}
-
-func ProductNotFound(ctx *gin.Context) {
-	NotFound(ctx, "Product not found", ProductNotFoundCode)
-}
-
-func OrderNotFound(ctx *gin.Context) {
-	NotFound(ctx, "Order not found", OrderNotFoundCode)
-}
-
-func CategoryNotFound(ctx *gin.Context) {
-	NotFound(ctx, "Category not found", CategoryNotFoundCode)
 }
 
 func Success(ctx *gin.Context, message string, data interface{}) {
@@ -159,6 +140,25 @@ func Unauthorized(ctx *gin.Context, message string) {
 	}
 
 	ctx.JSON(http.StatusUnauthorized, response)
+	ctx.Abort()
+}
+
+func Conflict(ctx *gin.Context, message string) {
+	if message == "" {
+		message = "A conflict occurred"
+	}
+
+	response := ErrorResponse{
+		Success:   false,
+		Error:     "Conflict",
+		Message:   message,
+		Code:      ConflictCode,
+		Path:      ctx.Request.URL.Path,
+		Method:    ctx.Request.Method,
+		Timestamp: time.Now().UTC(),
+	}
+
+	ctx.JSON(http.StatusConflict, response)
 	ctx.Abort()
 }
 
