@@ -7,6 +7,7 @@ import (
 	"invoicer-go/m/src/lib"
 	"invoicer-go/m/src/middlewares"
 	"invoicer-go/m/src/routes"
+	"invoicer-go/m/src/services"
 	"log"
 	"net/http"
 	"time"
@@ -26,6 +27,11 @@ func main() {
 	}
 
 	lib.InitialiseJWT(string(config.AppConfig.JWTSecret))
+
+	// Initialize OAuth providers
+	if err := services.InitializeProvider(); err != nil {
+		log.Fatal("OAuth provider initialization error:", err)
+	}
 
 	if config.AppConfig.IsDevMode {
 		gin.SetMode(gin.DebugMode)

@@ -44,11 +44,11 @@ type SigninResponse struct {
 func InitializeProvider() error {
 	appConfig := config.AppConfig
 
-	if appConfig.GoogleAuthId == "" || appConfig.GoogleAuthSecret == "" {
+	if appConfig.GoogleClientId == "" || appConfig.GoogleClientSecret == "" {
 		return errors.New("google OAuth credentials are required")
 	}
 
-	store := sessions.NewCookieStore([]byte(appConfig.GoogleAuthId))
+	store := sessions.NewCookieStore([]byte(appConfig.GoogleClientId))
 
 	store.Options = &sessions.Options{
 		Path:     "/",
@@ -62,8 +62,8 @@ func InitializeProvider() error {
 
 	goth.UseProviders(
 		google.New(
-			appConfig.GoogleAuthId,
-			appConfig.GoogleAuthSecret,
+			appConfig.GoogleClientId,
+			appConfig.GoogleClientSecret,
 			fmt.Sprintf("%s/auth/google/callback", strings.TrimSuffix(appConfig.ApiUrl, "/")),
 			"email", "profile",
 		),
@@ -73,10 +73,6 @@ func InitializeProvider() error {
 }
 
 func (s *AuthService) SigninWithOauth(payload *goth.User) (*SigninResponse, error) {
-	if payload.Provider != "google" {
-		return nil, ErrInvalidProvider
-	}
-
 	if payload.Email == "" {
 		return nil, errors.New("email is required from OAuth provider")
 	}
@@ -207,7 +203,7 @@ func (s *AuthService) SignOut(userID string) error {
 	if err != nil {
 		return err
 	}
-	store := sessions.NewCookieStore([]byte(config.AppConfig.GoogleAuthId))
+	store := sessions.NewCookieStore([]byte(config.AppConfig.GoogleClientId))
 	session, err := store.Get(nil, gothic.SessionName)
 	if err != nil {
 		return err

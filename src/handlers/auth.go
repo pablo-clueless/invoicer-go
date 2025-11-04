@@ -22,22 +22,46 @@ func NewAuthHandler() *AuthHandler {
 
 func (h *AuthHandler) SigninWithOauth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user, err := gothic.CompleteUserAuth(ctx.Writer, ctx.Request)
-		if err != nil {
-			gothic.BeginAuthHandler(ctx.Writer, ctx.Request)
+		provider := ctx.Param("provider")
+
+		if provider == "" {
+			lib.BadRequest(ctx, "Provider is required", "400")
 			return
 		}
-		response, err := h.service.SigninWithOauth(&user)
-		if err != nil {
-			lib.InternalServerError(ctx, err.Error())
-			return
-		}
-		lib.Success(ctx, "User signed in successfully", response)
+
+		q := ctx.Request.URL.Query()
+		q.Add("provider", provider)
+		ctx.Request.URL.RawQuery = q.Encode()
+
+		gothic.BeginAuthHandler(ctx.Writer, ctx.Request)
 	}
 }
 
 func (h *AuthHandler) GoogleCallback() gin.HandlerFunc {
-	return func(ctx *gin.Context) {}
+	return func(ctx *gin.Context) {
+		provider := ctx.Param("provider")
+		if provider == "" {
+			lib.BadRequest(ctx, "Provider is required", "400")
+			return
+		}
+
+		q := ctx.Request.URL.Query()
+		q.Add("provider", provider)
+		ctx.Request.URL.RawQuery = q.Encode()
+
+		user, err := gothic.CompleteUserAuth(ctx.Writer, ctx.Request)
+		if err != nil {
+			lib.InternalServerError(ctx, "Failed to complete OAuth authentication: "+err.Error())
+			return
+		}
+
+		response, err := h.service.SigninWithOauth(&user)
+		if err != nil {
+			lib.InternalServerError(ctx, "Failed to sign in with OAuth: "+err.Error())
+			return
+		}
+		lib.Success(ctx, "User signed in successfully", response)
+	}
 }
 
 func (h *AuthHandler) SigninOut() gin.HandlerFunc {
