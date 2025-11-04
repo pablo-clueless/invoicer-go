@@ -7,16 +7,12 @@ type Pagination struct {
 
 type CustomerPagination struct {
 	Pagination
-	Name  *string `json:"name,omitempty"`
-	Email *string `json:"email,omitempty"`
+	Query *string `json:"query,omitempty"`
 }
 
 type InvoicePagination struct {
 	Pagination
-	CustomerId  *string `json:"customerId,omitempty"`
-	ReferenceNo *string `json:"referenceNo,omitempty"`
-	Status      *string `json:"status,omitempty"`
-	Title       *string `json:"title,omitempty"`
+	Query *string `json:"query,omitempty"`
 }
 
 type PaginatedResponse[T any] struct {

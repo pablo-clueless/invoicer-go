@@ -97,14 +97,9 @@ func (s *CustomerService) GetCustomers(params dto.CustomerPagination) (*dto.Pagi
 
 	query := s.database.Model(&models.Customer{})
 
-	if params.Name != nil && strings.TrimSpace(*params.Name) != "" {
-		namePattern := "%" + strings.ToLower(strings.TrimSpace(*params.Name)) + "%"
-		query = query.Where("LOWER(name) LIKE ?", namePattern)
-	}
-
-	if params.Email != nil && strings.TrimSpace(*params.Email) != "" {
-		emailPattern := "%" + strings.ToLower(strings.TrimSpace(*params.Email)) + "%"
-		query = query.Where("LOWER(email) LIKE ?", emailPattern)
+	if params.Query != nil && strings.TrimSpace(*params.Query) != "" {
+		search := "%" + strings.ToLower(strings.TrimSpace(*params.Query)) + "%"
+		query = query.Where("LOWER(name) LIKE ? OR LOWER(email) LIKE ?", search, search)
 	}
 
 	if err := query.Count(&totalItems).Error; err != nil {

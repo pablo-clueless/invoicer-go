@@ -163,22 +163,11 @@ func (s *InvoiceService) GetInvoices(params dto.InvoicePagination) (*dto.Paginat
 
 	query := s.database.Model(&models.Invoice{}).Preload("Items")
 
-	if params.ReferenceNo != nil && strings.TrimSpace(*params.ReferenceNo) != "" {
-		referenceNoPattern := "%" + strings.ToLower(strings.TrimSpace(*params.ReferenceNo)) + "%"
-		query = query.Where("LOWER(reference_no) LIKE ?", referenceNoPattern)
-	}
-
-	if params.CustomerId != nil && strings.TrimSpace(*params.CustomerId) != "" {
-		query = query.Where("customer_id = ?", strings.TrimSpace(*params.CustomerId))
-	}
-
-	if params.Status != nil && strings.TrimSpace(*params.Status) != "" {
-		query = query.Where("status = ?", strings.TrimSpace(*params.Status))
-	}
-
-	if params.Title != nil && strings.TrimSpace(*params.Title) != "" {
-		titlePattern := "%" + strings.ToLower(strings.TrimSpace(*params.Title)) + "%"
-		query = query.Where("LOWER(title) LIKE ?", titlePattern)
+	if params.Query != nil && strings.TrimSpace(*params.Query) != "" {
+		search := "%" + strings.ToLower(strings.TrimSpace(*params.Query)) + "%"
+		query = query.Joins("JOIN customers ON customers.id = invoices.customer_id").
+			Where("LOWER(invoices.reference_no) LIKE ? OR LOWER(invoices.title) LIKE ? OR LOWER(invoices.status) LIKE ? OR LOWER(customers.name) LIKE ?",
+				search, search, search, search)
 	}
 
 	if err := query.Count(&totalItems).Error; err != nil {
