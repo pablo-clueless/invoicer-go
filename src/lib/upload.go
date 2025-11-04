@@ -8,7 +8,7 @@ import (
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
-func ImageUploader(files []*multipart.FileHeader, path string) ([]string, error) {
+func MultipleImagesUploader(files []*multipart.FileHeader, path string) ([]string, error) {
 	ctx := context.Background()
 	cld, err := config.UseCloudinary()
 	if err != nil {

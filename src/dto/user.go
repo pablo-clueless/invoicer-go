@@ -1,18 +1,18 @@
 package dto
 
 type UpdateUserDto struct {
-	BankInformation *BankInformation `json:"bankInformation,omitempty"`
-	CompanyLogo     *string          `json:"companyLogo,omitempty"`
-	CompanyName     *string          `json:"companyName,omitempty"`
-	Email           *string          `json:"email,omitempty"`
-	Name            *string          `json:"name,omitempty"`
-	Phone           *string          `json:"phone,omitempty"`
-	RcNumber        *string          `json:"rcNumber,omitempty"`
-	TaxId           *string          `json:"taxId,omitempty"`
-	Website         *string          `json:"website,omitempty"`
+	BankInformation *UpdateBankInformationDto `json:"bankInformation,omitempty"`
+	CompanyLogo     *string                   `json:"companyLogo,omitempty"`
+	CompanyName     *string                   `json:"companyName,omitempty"`
+	Email           *string                   `json:"email,omitempty"`
+	Name            *string                   `json:"name,omitempty"`
+	Phone           *string                   `json:"phone,omitempty"`
+	RcNumber        *string                   `json:"rcNumber,omitempty"`
+	TaxId           *string                   `json:"taxId,omitempty"`
+	Website         *string                   `json:"website,omitempty"`
 }
 
-type BankInformation struct {
+type UpdateBankInformationDto struct {
 	AccountName   *string `json:"accountName,omitempty"`
 	AccountNumber *string `json:"accountNumber,omitempty"`
 	BankName      *string `json:"bankName,omitempty"`
