@@ -10,8 +10,8 @@ func AuthRoutes(router *gin.RouterGroup) *gin.RouterGroup {
 	auth := router.Group("/auth")
 	handler := handlers.NewAuthHandler()
 
-	auth.GET("/google", handler.SigninWithOauth())
-	auth.GET("/google/callback", handler.GoogleCallback())
+	auth.GET("/:provider", handler.SigninWithOauth())
+	auth.GET("/:provider/callback", handler.GoogleCallback())
 	auth.POST("/signout", handler.SigninOut())
 
 	return auth

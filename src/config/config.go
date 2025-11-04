@@ -25,8 +25,8 @@ type Config struct {
 	CurrentUserId        string
 	CurrentUserRole      string
 	GinMode              string
-	GoogleAuthId         string
-	GoogleAuthSecret     string
+	GoogleClientId       string
+	GoogleClientSecret   string
 	IsDevMode            bool
 	JWTSecret            []byte
 	MaxImageSize         int
@@ -56,8 +56,8 @@ func InitializeConfig() {
 		CurrentUserId:        "CURRENT_USER_ID",
 		CurrentUserRole:      "CURRENT_USER_ROLE",
 		GinMode:              os.Getenv("GIN_MODE"),
-		GoogleAuthId:         os.Getenv("GOOGLE_AUTH_ID"),
-		GoogleAuthSecret:     os.Getenv("GOOGLE_AUTH_SECRET"),
+		GoogleClientId:       os.Getenv("GOOGLE_CLIENT_ID"),
+		GoogleClientSecret:   os.Getenv("GOOGLE_CLIENT_SECRET"),
 		IsDevMode:            os.Getenv("IS_DEV_MODE") == "true",
 		JWTSecret:            []byte(os.Getenv("JWT_SECRET")),
 		MaxImageSize:         1024 * 1024 * 5,
@@ -71,8 +71,10 @@ func InitializeConfig() {
 		NonAuthRoutes: []ApiRoute{
 			{Endpoint: "/api/v1", Method: http.MethodGet},
 			{Endpoint: "/api/v1/health", Method: http.MethodGet},
-			{Endpoint: "/api/v1/auth/signin", Method: http.MethodPost},
-			{Endpoint: "/api/v1/auth/google/callback", Method: http.MethodGet},
+			{Endpoint: "/api/v1/ws", Method: http.MethodGet},
+			{Endpoint: "/api/v1/auth/:provider", Method: http.MethodGet},
+			{Endpoint: "/api/v1/auth/:provider/callback", Method: http.MethodGet},
+			{Endpoint: "/api/v1/auth/signout", Method: http.MethodPost},
 		},
 	}
 }
