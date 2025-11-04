@@ -1,6 +1,11 @@
 package services
 
-import "gorm.io/gorm"
+import (
+	"invoicer-go/m/src/dto"
+	"invoicer-go/m/src/models"
+
+	"gorm.io/gorm"
+)
 
 type UserService struct {
 	database *gorm.DB
@@ -12,8 +17,14 @@ func NewUserService(database *gorm.DB) *UserService {
 	}
 }
 
-func (s *UserService) UpdateUser() {}
+func (s *UserService) UpdateUser(dto.UpdateUserDto) error {
+	return nil
+}
 
-func (s *UserService) DeleteUser() {}
+func (s *UserService) DeleteUser(id string) error {
+	return nil
+}
 
-func (s *UserService) GetUser() {}
+func (s *UserService) GetUser(id string) (*models.User, error) {
+	return nil, nil
+}

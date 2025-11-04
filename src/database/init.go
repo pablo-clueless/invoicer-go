@@ -144,6 +144,9 @@ func runMigrations(db *gorm.DB) error {
 		&models.BaseModel{},
 		&models.BankInformation{},
 		&models.Customer{},
+		&models.Invoice{},
+		&models.InvoiceItem{},
+		&models.User{},
 	}
 
 	return db.AutoMigrate(modelsToMigrate...)

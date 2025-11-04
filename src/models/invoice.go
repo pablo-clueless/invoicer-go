@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -26,30 +27,30 @@ const (
 type Invoice struct {
 	BaseModel
 	Currency     string        `json:"currency" gorm:"type:varchar(3)"`
-	CustomerID   uint          `json:"customer_id" gorm:"index"`
+	CustomerID   uuid.UUID     `json:"customerId" gorm:"index"`
 	Customer     Customer      `json:"customer,omitempty" gorm:"foreignKey:CustomerID"`
-	DateDue      time.Time     `json:"date_due" gorm:"index"`
-	DateIssued   time.Time     `json:"date_issued"`
+	DateDue      time.Time     `json:"dateDue" gorm:"index"`
+	DateIssued   time.Time     `json:"dateIssued"`
 	Discount     float64       `json:"discount"`
-	DiscountType DiscountType  `json:"discount_type" gorm:"type:varchar(10)"`
+	DiscountType DiscountType  `json:"discountType" gorm:"type:varchar(10)"`
 	Items        []InvoiceItem `json:"items,omitempty" gorm:"foreignKey:InvoiceID"`
 	Note         string        `json:"note" gorm:"type:text"`
-	ReferenceNo  string        `json:"reference_no" gorm:"type:varchar(100);uniqueIndex"`
+	ReferenceNo  string        `json:"referenceNo" gorm:"type:varchar(100);uniqueIndex"`
 	Status       InvoiceStatus `json:"status" gorm:"type:varchar(10);index"`
-	SubTotal     float64       `json:"sub_total"`
+	SubTotal     float64       `json:"subTotal"`
 	Tax          float64       `json:"tax"`
-	TaxType      DiscountType  `json:"tax_type" gorm:"type:varchar(10)"`
+	TaxType      DiscountType  `json:"taxType" gorm:"type:varchar(10)"`
 	Title        string        `json:"title" gorm:"type:varchar(255)"`
 	Total        float64       `json:"total"`
 }
 
 type InvoiceItem struct {
 	BaseModel
-	InvoiceID   uint    `json:"invoice_id" gorm:"index"`
-	Description string  `json:"description" gorm:"type:text"`
-	LineTotal   float64 `json:"line_total"`
-	Price       float64 `json:"price"`
-	Quantity    int     `json:"quantity"`
+	InvoiceID   uuid.UUID `json:"invoiceId" gorm:"index"`
+	Description string    `json:"description" gorm:"type:text"`
+	LineTotal   float64   `json:"lineTotal"`
+	Price       float64   `json:"price"`
+	Quantity    int       `json:"quantity"`
 }
 
 func (u *Invoice) BeforeCreate(tx *gorm.DB) error {

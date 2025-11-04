@@ -44,7 +44,7 @@ var AppConfig *Config
 
 func InitializeConfig() {
 	AppConfig = &Config{
-		AccessTokenExpiresIn: time.Hour * 2,
+		AccessTokenExpiresIn: time.Hour * 24 * 7,
 		AppEmail:             os.Getenv("APP_EMAIL"),
 		ApiUrl:               os.Getenv("API_URL"),
 		ClientUrl:            os.Getenv("CLIENT_URL"),
