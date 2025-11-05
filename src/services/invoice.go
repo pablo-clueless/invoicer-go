@@ -20,10 +20,52 @@ func NewInvoiceService(database *gorm.DB) *InvoiceService {
 	}
 }
 
+var (
+	ErrInvoiceTitleExists = errors.New("an invoice with this title already exists")
+)
+
+func (s *InvoiceService) calculateInvoiceTotals(invoice *models.Invoice) {
+	invoice.SubTotal = 0
+	for i := range invoice.Items {
+		invoice.Items[i].LineTotal = float64(invoice.Items[i].Quantity) * invoice.Items[i].Price
+		invoice.SubTotal += invoice.Items[i].LineTotal
+	}
+
+	var discountAmount, taxAmount float64
+
+	switch invoice.DiscountType {
+	case models.Fixed:
+		discountAmount = invoice.Discount
+	case models.Percentage:
+		discountAmount = invoice.Discount * invoice.SubTotal / 100
+	}
+
+	switch invoice.TaxType {
+	case models.Fixed:
+		taxAmount = invoice.Tax
+	case models.Percentage:
+		taxAmount = invoice.Tax * invoice.SubTotal / 100
+	}
+
+	invoice.Total = invoice.SubTotal + taxAmount - discountAmount
+}
+
 func (s *InvoiceService) CreateInvoice(payload dto.CreateInvoiceDto) (*models.Invoice, error) {
 	customerService := NewCustomerService(s.database)
 	if _, err := customerService.FindCustomerById(payload.CustomerID); err != nil {
 		return nil, err
+	}
+
+	existingInvoice, _ := s.FindInvoiceByTitle(payload.Title)
+	if existingInvoice != nil {
+		return nil, ErrInvoiceTitleExists
+	}
+
+	var status models.InvoiceStatus
+	if payload.IsDraft {
+		status = models.Draft
+	} else {
+		status = models.Pending
 	}
 
 	invoice := &models.Invoice{
@@ -36,11 +78,7 @@ func (s *InvoiceService) CreateInvoice(payload dto.CreateInvoiceDto) (*models.In
 		Tax:          payload.Tax,
 		TaxType:      models.DiscountType(payload.TaxType),
 		Title:        payload.Title,
-		Status:       models.Draft,
-	}
-
-	if !payload.IsDraft {
-		invoice.Status = models.Pending
+		Status:       status,
 	}
 
 	invoice.Items = make([]models.InvoiceItem, 0, len(payload.Items))
@@ -49,13 +87,19 @@ func (s *InvoiceService) CreateInvoice(payload dto.CreateInvoiceDto) (*models.In
 			Description: item.Description,
 			Quantity:    item.Quantity,
 			Price:       item.Price,
-			LineTotal:   item.LineTotal,
 		})
 	}
+
+	s.calculateInvoiceTotals(invoice)
 
 	if err := s.database.Create(invoice).Error; err != nil {
 		return nil, err
 	}
+
+	if err := s.database.Preload("Customer").Preload("Items").First(invoice, invoice.ID).Error; err != nil {
+		return nil, err
+	}
+
 	return invoice, nil
 }
 
@@ -65,10 +109,16 @@ func (s *InvoiceService) UpdateInvoice(id string, payload dto.UpdateInvoiceDto) 
 		return nil, err
 	}
 
+	if payload.Title != nil {
+		existingInvoice, _ := s.FindInvoiceByTitle(*payload.Title)
+		if existingInvoice != nil && existingInvoice.ID != invoice.ID {
+			return nil, ErrInvoiceTitleExists
+		}
+	}
+
 	if payload.Status != nil {
 		invoice.Status = models.InvoiceStatus(*payload.Status)
 	}
-
 	if payload.Currency != nil {
 		invoice.Currency = *payload.Currency
 	}
@@ -94,39 +144,45 @@ func (s *InvoiceService) UpdateInvoice(id string, payload dto.UpdateInvoiceDto) 
 		invoice.Title = *payload.Title
 	}
 
-	if payload.Items != nil {
-		if err = s.database.Where("invoice_id = ?", invoice.ID).Delete(&models.InvoiceItem{}).Error; err != nil {
-			return nil, err
-		}
+	err = s.database.Transaction(func(tx *gorm.DB) error {
+		if payload.Items != nil {
+			if err = tx.Where("invoice_id = ?", invoice.ID).Delete(&models.InvoiceItem{}).Error; err != nil {
+				return err
+			}
 
-		invoice.Items = make([]models.InvoiceItem, len(payload.Items))
-		for i, item := range payload.Items {
-			invoice.Items[i] = models.InvoiceItem{
-				Description: item.Description,
-				Quantity:    item.Quantity,
-				Price:       item.Price,
-				LineTotal:   item.LineTotal,
+			invoice.Items = make([]models.InvoiceItem, len(payload.Items))
+			for i, item := range payload.Items {
+				invoice.Items[i] = models.InvoiceItem{
+					InvoiceID:   invoice.ID,
+					Description: item.Description,
+					Quantity:    item.Quantity,
+					Price:       item.Price,
+				}
 			}
 		}
-	}
 
-	err = s.database.Transaction(func(tx *gorm.DB) error {
+		s.calculateInvoiceTotals(invoice)
+
 		if err = tx.Save(invoice).Error; err != nil {
 			return err
 		}
 
 		if payload.Items != nil {
 			for i := range invoice.Items {
-				invoice.Items[i].InvoiceID = invoice.ID
 				if err = tx.Create(&invoice.Items[i]).Error; err != nil {
 					return err
 				}
 			}
 		}
+
 		return nil
 	})
 
 	if err != nil {
+		return nil, err
+	}
+
+	if err := s.database.Preload("Customer").Preload("Items").First(invoice, invoice.ID).Error; err != nil {
 		return nil, err
 	}
 
@@ -161,7 +217,7 @@ func (s *InvoiceService) GetInvoices(params dto.InvoicePagination) (*dto.Paginat
 	var invoices []models.Invoice
 	var totalItems int64
 
-	query := s.database.Model(&models.Invoice{}).Preload("Items")
+	query := s.database.Model(&models.Invoice{})
 
 	if params.Query != nil && strings.TrimSpace(*params.Query) != "" {
 		search := "%" + strings.ToLower(strings.TrimSpace(*params.Query)) + "%"
@@ -183,6 +239,7 @@ func (s *InvoiceService) GetInvoices(params dto.InvoicePagination) (*dto.Paginat
 	offset := (params.Page - 1) * params.Limit
 
 	if err := query.Offset(offset).
+		Preload("Customer").
 		Preload("Items").
 		Limit(params.Limit).
 		Order("created_at DESC").
@@ -205,18 +262,34 @@ func (s *InvoiceService) GetInvoices(params dto.InvoicePagination) (*dto.Paginat
 }
 
 func (s *InvoiceService) GetInvoice(id string) (*models.Invoice, error) {
-	return s.FindInvoiceById(id)
+	invoice := &models.Invoice{}
+	if err := s.database.Preload("Customer").Preload("Items").Where("id = ?", id).First(invoice).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrInvoiceNotFound
+		}
+		return nil, err
+	}
+	return invoice, nil
 }
 
 func (s *InvoiceService) FindInvoiceById(id string) (*models.Invoice, error) {
 	invoice := &models.Invoice{}
-
 	if err := s.database.Preload("Items").Where("id = ?", id).First(invoice).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrInvoiceNotFound
 		}
 		return nil, err
 	}
+	return invoice, nil
+}
 
+func (s *InvoiceService) FindInvoiceByTitle(title string) (*models.Invoice, error) {
+	invoice := &models.Invoice{}
+	if err := s.database.Preload("Items").Where("title = ?", title).First(invoice).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrInvoiceNotFound
+		}
+		return nil, err
+	}
 	return invoice, nil
 }

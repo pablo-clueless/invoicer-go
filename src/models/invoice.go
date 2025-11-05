@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"invoicer-go/m/src/lib"
 	"time"
 
 	"github.com/google/uuid"
@@ -57,57 +58,11 @@ func (u *Invoice) BeforeCreate(tx *gorm.DB) error {
 	u.DateIssued = time.Now()
 	u.CreatedAt = sql.NullTime{Time: time.Now(), Valid: true}
 	u.UpdatedAt = sql.NullTime{Time: time.Now(), Valid: true}
-	u.SubTotal = 0
-	for _, item := range u.Items {
-		u.SubTotal += item.LineTotal
-	}
-	DiscountAmount := 0
-	TaxAmount := 0
-
-	switch u.TaxType {
-	case Fixed:
-		TaxAmount = int(u.Tax)
-	case Percentage:
-		TaxAmount = int(u.Tax * u.SubTotal / 100)
-	}
-
-	switch u.DiscountType {
-	case Fixed:
-		DiscountAmount = int(u.Discount)
-	case Percentage:
-		DiscountAmount = int(u.Discount * u.SubTotal / 100)
-	}
-
-	u.Total = u.SubTotal + float64(TaxAmount) - float64(DiscountAmount)
+	u.ReferenceNo = lib.GenerateTransactionReference()
 	return nil
 }
 
 func (u *Invoice) BeforeUpdate(tx *gorm.DB) error {
 	u.UpdatedAt = sql.NullTime{Time: time.Now(), Valid: true}
-
-	u.SubTotal = 0
-	for _, item := range u.Items {
-		u.SubTotal += item.LineTotal
-	}
-
-	DiscountAmount := 0
-	TaxAmount := 0
-
-	switch u.TaxType {
-	case Fixed:
-		TaxAmount = int(u.Tax)
-	case Percentage:
-		TaxAmount = int(u.Tax * u.SubTotal / 100)
-	}
-
-	switch u.DiscountType {
-	case Fixed:
-		DiscountAmount = int(u.Discount)
-	case Percentage:
-		DiscountAmount = int(u.Discount * u.SubTotal / 100)
-	}
-
-	u.Total = u.SubTotal + float64(TaxAmount) - float64(DiscountAmount)
-
 	return nil
 }
