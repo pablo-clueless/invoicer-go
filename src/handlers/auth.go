@@ -60,7 +60,7 @@ func (h *AuthHandler) GoogleCallback() gin.HandlerFunc {
 			lib.InternalServerError(ctx, "Failed to sign in with OAuth: "+err.Error())
 			return
 		}
-		lib.Success(ctx, "User signed in successfully", response)
+		ctx.Redirect(302, response.RedirectUrl)
 	}
 }
 

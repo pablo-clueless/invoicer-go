@@ -33,10 +33,10 @@ func (u *User) BeforeUpdate(tx *gorm.DB) error {
 }
 
 type BankInformation struct {
-	AccountName   string `json:"accountName" gorm:"type:varchar(255);not null"`
-	AccountNumber string `json:"accountNumber" gorm:"type:varchar(255);not null"`
-	BankName      string `json:"bankName" gorm:"type:varchar(255);not null"`
-	BankSwiftCode string `json:"bankSwiftCode" gorm:"type:varchar(255);not null"`
-	Iban          string `json:"iban" gorm:"type:varchar(255);not null"`
-	RoutingNumber string `json:"routingNumber" gorm:"type:varchar(255);not null"`
+	AccountName   string `json:"accountName" gorm:"type:varchar(255)"`
+	AccountNumber string `json:"accountNumber" gorm:"type:varchar(255)"`
+	BankName      string `json:"bankName" gorm:"type:varchar(255)"`
+	BankSwiftCode string `json:"bankSwiftCode" gorm:"type:varchar(255)"`
+	Iban          string `json:"iban" gorm:"type:varchar(255)"`
+	RoutingNumber string `json:"routingNumber" gorm:"type:varchar(255)"`
 }

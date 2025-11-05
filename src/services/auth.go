@@ -7,6 +7,7 @@ import (
 	"invoicer-go/m/src/lib"
 	"invoicer-go/m/src/models"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -37,8 +38,9 @@ func NewAuthService(database *gorm.DB) *AuthService {
 }
 
 type SigninResponse struct {
-	User  models.User `json:"user"`
-	Token string      `json:"token"`
+	RedirectUrl string      `json:"redirectUrl"`
+	Token       string      `json:"token"`
+	User        models.User `json:"user"`
 }
 
 func InitializeProvider() error {
@@ -60,16 +62,59 @@ func InitializeProvider() error {
 
 	gothic.Store = store
 
+	base := strings.TrimSuffix(appConfig.ApiUrl, "/")
+	version := strings.Trim(appConfig.Version, "/")
+	if version != "" && !strings.HasSuffix(base, "/"+version) {
+		base = base + "/" + version
+	}
+
 	goth.UseProviders(
 		google.New(
 			appConfig.GoogleClientId,
 			appConfig.GoogleClientSecret,
-			fmt.Sprintf("%s/auth/google/callback", strings.TrimSuffix(appConfig.ApiUrl, "/")),
+			fmt.Sprintf("%s/auth/google/callback", base),
 			"email", "profile",
 		),
 	)
 
 	return nil
+}
+
+func (s *AuthService) GetFrontendRedirectURL(token, userID string) string {
+	frontendURL := strings.TrimSuffix(config.AppConfig.ClientUrl, "/")
+	redirectURL := fmt.Sprintf("%s/auth/success", frontendURL)
+
+	params := url.Values{}
+	params.Add("token", token)
+	params.Add("user_id", userID)
+
+	return redirectURL + "?" + params.Encode()
+}
+
+func (s *AuthService) GetFrontendErrorRedirectURL(message string) string {
+	frontendURL := strings.TrimSuffix(config.AppConfig.ClientUrl, "/")
+
+	redirectURL := fmt.Sprintf("%s/auth/error", frontendURL)
+
+	params := url.Values{}
+	params.Add("error", message)
+
+	return redirectURL + "?" + params.Encode()
+}
+
+func (s *AuthService) HandleOAuthCallback(res http.ResponseWriter, req *http.Request) (string, error) {
+	gothUser, err := gothic.CompleteUserAuth(res, req)
+	if err != nil {
+		return "", fmt.Errorf("failed to complete OAuth: %w", err)
+	}
+
+	signinResponse, err := s.SigninWithOauth(&gothUser)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign in with OAuth: %w", err)
+	}
+
+	redirectURL := s.GetFrontendRedirectURL(signinResponse.Token, signinResponse.User.ID.String())
+	return redirectURL, nil
 }
 
 func (s *AuthService) SigninWithOauth(payload *goth.User) (*SigninResponse, error) {
@@ -104,8 +149,9 @@ func (s *AuthService) SigninWithOauth(payload *goth.User) (*SigninResponse, erro
 	}
 
 	return &SigninResponse{
-		User:  *user,
-		Token: token,
+		RedirectUrl: s.GetFrontendRedirectURL(token, user.ID.String()),
+		User:        *user,
+		Token:       token,
 	}, nil
 }
 

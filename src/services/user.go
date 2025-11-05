@@ -91,7 +91,7 @@ func (s *UserService) DeleteUser(id string) error {
 func (s *UserService) GetUser(id string) (*models.User, error) {
 	user := &models.User{}
 
-	if err := s.database.Preload("BankInformation").First(user, "id = ?", id).Error; err != nil {
+	if err := s.database.First(user, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrUserNotFound
 		}

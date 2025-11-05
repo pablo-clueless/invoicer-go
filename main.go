@@ -28,7 +28,6 @@ func main() {
 
 	lib.InitialiseJWT(string(config.AppConfig.JWTSecret))
 
-	// Initialize OAuth providers
 	if err := services.InitializeProvider(); err != nil {
 		log.Fatal("OAuth provider initialization error:", err)
 	}
@@ -43,8 +42,11 @@ func main() {
 	app.Use(gin.Logger())
 	app.Use(cors.New(cors.Config{
 		AllowCredentials: true,
-		AllowMethods:     []string{"DELETE", "GET", "POST", "PUT", "OPTIONS"},
-		AllowOrigins:     []string{"*"},
+		AllowHeaders: []string{
+			"Origin", "Content-Type", "Authorization", "X-RateLimit-Limit", "X-RateLimit-Reset",
+		},
+		AllowMethods: []string{"DELETE", "GET", "POST", "PUT", "OPTIONS"},
+		AllowOrigins: []string{"*", config.AppConfig.ClientUrl},
 	}))
 	app.Use(middlewares.ErrorHandlerMiddleware())
 	app.Use(middlewares.AuthMiddleware())
