@@ -109,7 +109,7 @@ func (s *InvoiceService) UpdateInvoice(id string, payload dto.UpdateInvoiceDto) 
 		return nil, err
 	}
 
-	if payload.Title != nil {
+	if payload.Title != nil && !strings.EqualFold(*payload.Title, invoice.Title) {
 		existingInvoice, _ := s.FindInvoiceByTitle(*payload.Title)
 		if existingInvoice != nil && existingInvoice.ID != invoice.ID {
 			return nil, ErrInvoiceTitleExists
